@@ -1,6 +1,6 @@
 /**
- * MusicFriends Engine Ultimate + AUTO-NAME & NO-CLONE SYSTEM
- * UPDATED: DROPBOX AUTO-FIX & MOBILE OPTIMIZATION
+ * MusicFriends Engine Ultimate + VIDEO BANNER SYSTEM
+ * UPDATED: 2026 Compatible
  */
 
 // --- 0. ПОДКЛЮЧЕНИЕ FIREBASE ---
@@ -51,7 +51,6 @@ let currentSongIndex = -1;
 let isPlaying = false;
 let pendingFile = null;
 const audio = new Audio();
-// Важно для мобильных: разрешаем предзагрузку
 audio.preload = "auto";
 audio.volume = settings.volume;
 
@@ -73,7 +72,8 @@ const UI = {
     displayName: document.getElementById('display-name'),
     displayArtist: document.getElementById('display-artist'),
     onlineCounter: document.getElementById('online-counter'),
-    friendAvatars: document.getElementById('friend-avatars')
+    friendAvatars: document.getElementById('friend-avatars'),
+    contentArea: document.querySelector('.content') // Для баннера
 };
 
 // --- 2. ИНИЦИАЛИЗАЦИЯ ---
@@ -95,6 +95,7 @@ window.addEventListener('DOMContentLoaded', () => {
         renderLibrary();
     });
 
+    // Обработка ввода ссылки на песню (авто-имя)
     const customUrlInput = document.getElementById('custom-url');
     if (customUrlInput) {
         customUrlInput.addEventListener('input', (e) => {
@@ -117,7 +118,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast(`Добро пожаловать, ${userProfile.name}!`);
 });
 
-// --- 3. ЛОГИКА ПРОФИЛЯ ---
+// --- 3. ЛОГИКА ПРОФИЛЯ + ВИДЕО БАННЕР ---
 
 function applyProfileStyles() {
     const root = document.documentElement;
@@ -144,15 +145,48 @@ function applyProfileStyles() {
         }
     }
 
-    const contentEl = document.querySelector('.content');
-    if (contentEl) {
-        if (userProfile.banner) {
-            contentEl.style.backgroundImage = `linear-gradient(to bottom, rgba(18,18,18,0.8), #121212), url(${userProfile.banner})`;
-            contentEl.style.backgroundSize = 'cover';
-            contentEl.style.backgroundPosition = 'center top';
+    handleBannerMedia();
+}
+
+/**
+ * Функция управления медиа-баннером (Видео или Фото)
+ */
+function handleBannerMedia() {
+    if (!UI.contentArea) return;
+
+    // Ищем существующее видео
+    let videoBg = document.getElementById('banner-video');
+    
+    if (userProfile.banner) {
+        // Проверяем, является ли баннер видео (Base64 видео или ссылка на mp4/webm)
+        const isVideo = userProfile.banner.includes("video/mp4") || 
+                        userProfile.banner.includes("video/webm") || 
+                        userProfile.banner.match(/\.(mp4|webm|mov)$/i);
+
+        if (isVideo) {
+            // Если видео еще нет — создаем
+            if (!videoBg) {
+                videoBg = document.createElement('video');
+                videoBg.id = 'banner-video';
+                videoBg.autoplay = true;
+                videoBg.muted = true;
+                videoBg.loop = true;
+                videoBg.playsInline = true;
+                UI.contentArea.appendChild(videoBg);
+            }
+            videoBg.src = userProfile.banner;
+            UI.contentArea.style.backgroundImage = "none";
         } else {
-            contentEl.style.backgroundImage = `linear-gradient(to bottom, #222, #121212)`;
+            // Если это картинка — удаляем видео и ставим фон
+            if (videoBg) videoBg.remove();
+            UI.contentArea.style.backgroundImage = `linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg-dark)), url(${userProfile.banner})`;
+            UI.contentArea.style.backgroundSize = 'cover';
+            UI.contentArea.style.backgroundPosition = 'center top';
         }
+    } else {
+        // Если баннера нет — всё чистим
+        if (videoBg) videoBg.remove();
+        UI.contentArea.style.backgroundImage = `linear-gradient(to bottom, #222, var(--bg-dark))`;
     }
 }
 
@@ -165,7 +199,8 @@ document.getElementById('open-profile-btn').onclick = () => {
 
 document.getElementById('save-profile').onclick = async () => {
     const saveBtn = document.getElementById('save-profile');
-    saveBtn.innerText = "Сохранение...";
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "Обработка...";
     
     userProfile.name = document.getElementById('edit-name').value || "User";
     userProfile.theme = document.getElementById('edit-theme').value;
@@ -183,17 +218,17 @@ document.getElementById('save-profile').onclick = async () => {
         updateOnlineStatus();
 
         UI.profileModal.style.display = 'none';
-        showToast("Профиль обновлен!");
+        showToast("Профиль сохранен!");
     } catch (e) {
-        showToast("Ошибка: Картинка слишком большая!", "error");
+        showToast("Файл слишком велик!", "error");
     } finally {
-        saveBtn.innerText = "Сохранить";
+        saveBtn.innerText = originalText;
     }
 };
 
 document.getElementById('close-profile').onclick = () => UI.profileModal.style.display = 'none';
 
-// --- 4. ЛОГИКА БИБЛИОТЕКИ (С ФИКСОМ ССЫЛОК) ---
+// --- 4. ЛОГИКА БИБЛИОТЕКИ (FIREBASE) ---
 
 const addByLinkBtn = document.getElementById('add-by-link-btn');
 if (addByLinkBtn) {
@@ -202,19 +237,7 @@ if (addByLinkBtn) {
         document.getElementById('custom-title').value = "";
         document.getElementById('custom-artist').value = userProfile.name;
         document.getElementById('custom-url').value = "";
-        document.getElementById('custom-cover-link').value = "";
     };
-} else {
-    document.querySelectorAll('.upload-btn').forEach(btn => {
-        if (btn.innerText.includes("ссылке")) {
-            btn.onclick = () => {
-                UI.uploadModal.style.display = 'flex';
-                document.getElementById('custom-title').value = "";
-                document.getElementById('custom-url').value = "";
-                document.getElementById('custom-artist').value = userProfile.name;
-            }
-        }
-    });
 }
 
 UI.fileInput.addEventListener('change', (e) => {
@@ -223,7 +246,7 @@ UI.fileInput.addEventListener('change', (e) => {
         UI.uploadModal.style.display = 'flex';
         document.getElementById('custom-title').value = pendingFile.name.replace('.mp3', '');
         document.getElementById('custom-artist').value = userProfile.name;
-        showToast("Файл выбран. Вставь прямую ссылку на него.");
+        showToast("Файл выбран. Вставь ссылку для облака.");
     }
 });
 
@@ -232,13 +255,13 @@ document.getElementById('confirm-upload').onclick = async () => {
     let songUrl = document.getElementById('custom-url').value; 
     const coverUrl = document.getElementById('custom-cover-link').value;
     
-    // --- АВТО-ФИКС DROPBOX ДЛЯ МОБИЛЬНЫХ И ПК ---
+    // DROPBOX FIX
     if (songUrl.includes("dropbox.com")) {
         songUrl = songUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("dl=0", "raw=1");
     }
     
     if (!songUrl || !songUrl.startsWith('http')) {
-        showToast("Вставь ссылку на музыку!", "error");
+        showToast("Нужна прямая ссылка!", "error");
         return;
     }
 
@@ -248,19 +271,18 @@ document.getElementById('confirm-upload').onclick = async () => {
             title: document.getElementById('custom-title').value || "Без названия",
             artist: document.getElementById('custom-artist').value || "Неизвестен",
             cover: coverUrl || "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
-            url: songUrl
+            url: songUrl,
+            addedBy: userProfile.name
         };
 
         const newSongRef = push(globalSongsRef);
         await set(newSongRef, newSong);
 
-        document.getElementById('custom-url').value = '';
-        document.getElementById('custom-cover-link').value = '';
         UI.uploadModal.style.display = 'none';
         UI.fileInput.value = '';
-        showToast("Песня добавлена для всех!");
+        showToast("Добавлено в общую очередь!");
     } catch (e) {
-        showToast("Ошибка сети", "error");
+        showToast("Ошибка базы данных", "error");
     } finally {
         btn.innerText = "Опубликовать";
     }
@@ -270,47 +292,46 @@ document.getElementById('cancel-upload').onclick = () => UI.uploadModal.style.di
 
 async function deleteSong(index, event) {
     event.stopPropagation();
-    if(confirm("Удалить этот трек у ВСЕХ пользователей?")) {
+    if(confirm("Удалить этот трек для всех?")) {
         const keyToDelete = songKeys[index];
         try {
             await remove(ref(db, `shared_songs/${keyToDelete}`));
-            showToast("Трек удален из облака");
+            showToast("Трек удален");
         } catch (e) {
-            showToast("Ошибка удаления", "error");
+            showToast("Нет прав доступа", "error");
         }
     }
 }
 
 function renderLibrary() {
     if (songs.length === 0) {
-        UI.songGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-dim)">Библиотека пуста.</div>`;
+        UI.songGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-dim)">Музыки пока нет. Будь первым!</div>`;
         return;
     }
     UI.songGrid.innerHTML = songs.map((song, i) => `
         <div class="song-card ${currentSongIndex === i ? 'playing-card' : ''}" onclick="playSong(${i})">
             <button class="delete-btn" onclick="deleteSong(${i}, event)"><i class="fas fa-trash"></i></button>
             <div class="cover">
-                <img src="${song.cover}" style="width:100%; height:100%; object-fit:cover;">
+                <img src="${song.cover}" loading="lazy">
                 <div class="play-btn"><i class="fas ${currentSongIndex === i && isPlaying ? 'fa-pause' : 'fa-play'}"></i></div>
             </div>
             <div class="info"><span class="title">${song.title}</span><span class="artist">${song.artist}</span></div>
         </div>`).join('');
 }
 
-// --- 5. ПЛЕЕР ---
+// --- 5. ПЛЕЕР (LOGIC) ---
 
 function playSong(index) {
     if (index < 0 || index >= songs.length) return;
     if (currentSongIndex === index) { togglePlay(); return; }
+    
     currentSongIndex = index;
     audio.src = songs[index].url;
-    audio.load(); // Важно для смены трека на мобильных
     audio.play().then(() => { 
         isPlaying = true; 
         updatePlayerUI(songs[index]); 
-    }).catch((err) => {
-        console.error(err);
-        showToast("Ошибка ссылки (Dropbox/Discord)", "error");
+    }).catch(() => {
+        showToast("Ошибка воспроизведения ссылки", "error");
     });
 }
 
@@ -322,14 +343,10 @@ function togglePlay() {
     renderLibrary();
 }
 
-window.playSong = playSong;
-window.togglePlay = togglePlay;
-window.deleteSong = deleteSong;
-
 function updatePlayerUI(song) {
     UI.displayName.innerText = song.title;
     UI.displayArtist.innerText = song.artist;
-    UI.currentCover.innerHTML = `<img src="${song.cover}" style="width:100%; height:100%; object-fit:cover;">`;
+    UI.currentCover.innerHTML = `<img src="${song.cover}">`;
     updatePlayBtn();
     renderLibrary();
 }
@@ -342,13 +359,12 @@ function initPlayerControls() {
     UI.playPauseBtn.onclick = togglePlay;
     UI.nextBtn.onclick = () => {
         if (songs.length === 0) return;
-        if (settings.isShuffle) playSong(Math.floor(Math.random() * songs.length));
-        else playSong((currentSongIndex + 1) % songs.length);
+        let next = settings.isShuffle ? Math.floor(Math.random() * songs.length) : (currentSongIndex + 1) % songs.length;
+        playSong(next);
     };
     UI.prevBtn.onclick = () => {
         if (songs.length === 0) return;
-        let prev = currentSongIndex - 1;
-        if (prev < 0) prev = songs.length - 1;
+        let prev = (currentSongIndex - 1 < 0) ? songs.length - 1 : currentSongIndex - 1;
         playSong(prev);
     };
 
@@ -356,36 +372,26 @@ function initPlayerControls() {
         settings.isShuffle = !settings.isShuffle;
         UI.shuffleBtn.style.color = settings.isShuffle ? 'var(--accent)' : 'var(--text-dim)';
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-        showToast(settings.isShuffle ? "Перемешивание: ВКЛ" : "Перемешивание: ВЫКЛ");
     };
 
     if(UI.repeatBtn) UI.repeatBtn.onclick = () => {
         settings.isRepeat = !settings.isRepeat;
         UI.repeatBtn.style.color = settings.isRepeat ? 'var(--accent)' : 'var(--text-dim)';
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-        showToast(settings.isRepeat ? "Повтор: ВКЛ" : "Повтор: ВЫКЛ");
     };
 
     UI.volumeBg.onclick = (e) => {
         let vol = e.offsetX / UI.volumeBg.clientWidth;
         audio.volume = Math.max(0, Math.min(1, vol));
-        settings.volume = audio.volume;
         UI.volumeFill.style.width = (audio.volume * 100) + '%';
+        settings.volume = audio.volume;
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     };
-
-    document.addEventListener('keydown', (e) => {
-        if(e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); togglePlay(); }
-    });
 }
 
 audio.onended = () => {
-    if (settings.isRepeat) {
-        audio.currentTime = 0;
-        audio.play();
-    } else {
-        UI.nextBtn.click();
-    }
+    if (settings.isRepeat) { audio.currentTime = 0; audio.play(); } 
+    else UI.nextBtn.click();
 };
 
 audio.ontimeupdate = () => {
@@ -402,53 +408,39 @@ UI.progressContainer.onclick = (e) => {
 
 // --- 6. FIREBASE ONLINE ---
 
-let myPresenceRef = null;
-
 function initRealtimeFriends() {
-    myPresenceRef = ref(db, `online/${userId}`);
-    updateOnlineStatus();
-    onDisconnect(myPresenceRef).remove();
+    const myPresenceRef = ref(db, `online/${userId}`);
+    onValue(ref(db, '.info/connected'), (snap) => {
+        if (snap.val() === true) {
+            onDisconnect(myPresenceRef).remove();
+            updateOnlineStatus();
+        }
+    });
 
-    const onlineRef = ref(db, 'online');
-    onValue(onlineRef, (snapshot) => {
-        const users = snapshot.val();
-        renderOnlineUsers(users);
+    onValue(ref(db, 'online'), (snapshot) => {
+        renderOnlineUsers(snapshot.val());
     });
 }
 
 function updateOnlineStatus() {
-    if (myPresenceRef) {
-        set(myPresenceRef, {
-            name: userProfile.name,
-            avatar: userProfile.avatar,
-            color: userProfile.color,
-            lastSeen: Date.now()
-        });
-    }
+    set(ref(db, `online/${userId}`), {
+        name: userProfile.name,
+        avatar: userProfile.avatar,
+        color: userProfile.color,
+        lastSeen: Date.now()
+    });
 }
 
 function renderOnlineUsers(users) {
-    if (!users) {
-        UI.onlineCounter.innerText = "0 онлайн";
-        UI.friendAvatars.innerHTML = "";
-        return;
-    }
+    if (!users) return;
     const userList = Object.values(users);
-    UI.onlineCounter.innerText = `${userList.length} онлайн`;
+    if(UI.onlineCounter) UI.onlineCounter.innerText = `${userList.length} онлайн`;
 
     UI.friendAvatars.innerHTML = userList.map(user => `
         <div class="avatar" title="${user.name}" style="
             background: ${user.avatar ? `url(${user.avatar})` : user.color};
-            background-size: cover;
-            background-position: center;
-            border: 2px solid #121212;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: -10px;
-            position: relative;
-        "></div>
+            background-size: cover; background-position: center;">
+        </div>
     `).join('');
 }
 
@@ -472,7 +464,12 @@ function formatTime(s) {
 function showToast(message, type = 'success') {
     let toast = document.createElement('div');
     toast.innerText = message;
-    toast.style.cssText = `position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:${type === 'error' ? '#ff4757' : 'var(--accent, #1db954)'}; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; z-index:10000; transition:0.3s; pointer-events:none;`;
+    toast.style.cssText = `position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:${type === 'error' ? '#ff4757' : 'var(--accent)'}; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; z-index:10000; transition:0.3s; pointer-events:none;`;
     document.body.appendChild(toast);
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
 }
+
+// Экспорт функций для HTML onclick
+window.playSong = playSong;
+window.togglePlay = togglePlay;
+window.deleteSong = deleteSong;
