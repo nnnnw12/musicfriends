@@ -43,7 +43,9 @@
     </nav>
   </aside>
 
-  <main class="content">
+  <main class="content" id="main-content">
+    <video id="banner-video" autoplay loop muted playsinline style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none;"></video>
+
     <header>
       <h1>Общая библиотека</h1>
       <div class="friends-status">
@@ -86,8 +88,8 @@
       </div>
 
       <div class="input-group">
-        <label>Баннер профиля (фон контента)</label>
-        <input type="file" id="upload-banner" accept="image/*">
+        <label>Баннер профиля (Фото или Видео без звука)</label>
+        <input type="file" id="upload-banner" accept="image/*,video/*">
       </div>
 
       <div class="modal-actions">
