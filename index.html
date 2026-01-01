@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MusicFriends</title>
-    
     <link rel="stylesheet" href="Style.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -22,7 +20,7 @@
       <div class="user-avatar" id="current-user-avatar"></div>
       <div class="user-info">
         <span id="current-user-name">Загрузка...</span>
-        <small>Настроить стиль</small>
+        <small><i class="fas fa-magic"></i> Настроить стиль</small>
       </div>
     </div>
 
@@ -58,66 +56,94 @@
   </main>
 
   <div id="profile-edit-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width: 500px;">
-      <h3>Настройки профиля и Темы</h3>
+    <div class="modal-card profile-modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-circle"></i> Настройки профиля</h3>
+        <p>Персонализируйте ваш аккаунт и внешний вид сайта</p>
+      </div>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div class="input-group">
-          <label>Ваше имя</label>
-          <input type="text" id="edit-name">
+      <div class="profile-grid-container">
+        <div class="two-cols">
+          <div class="input-group">
+            <label>Ваше имя</label>
+            <div class="input-wrapper">
+                <i class="fas fa-signature"></i>
+                <input type="text" id="edit-name" placeholder="Введите ник">
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Тема сайта</label>
+            <div class="input-wrapper">
+                <i class="fas fa-palette"></i>
+                <select id="edit-theme">
+                  <option value="default">Spotify Green</option>
+                  <option value="plasma">Cyber Pink</option>
+                  <option value="ocean">Deep Ocean</option>
+                  <option value="gold">Luxury Gold</option>
+                </select>
+            </div>
+          </div>
         </div>
+
         <div class="input-group">
-          <label>Тема сайта</label>
-          <select id="edit-theme" style="background: #3e3e3e; color: white; border: none; padding: 10px; border-radius: 8px;">
-            <option value="default">Spotify Green</option>
-            <option value="plasma">Cyber Pink</option>
-            <option value="ocean">Deep Ocean</option>
-            <option value="gold">Luxury Gold</option>
-          </select>
+          <label>Цвет акцента (индивидуальный)</label>
+          <div class="color-picker-wrapper">
+            <input type="color" id="edit-color" value="#1db954">
+            <span>Выберите оттенок для элементов интерфейса</span>
+          </div>
         </div>
-      </div>
 
-      <div class="input-group" style="margin-top: 15px;">
-        <label>Цвет акцента (если нет темы)</label>
-        <input type="color" id="edit-color" style="height: 40px; width: 100%; border: none; padding: 5px; background: #3e3e3e;">
-      </div>
-
-      <div class="input-group">
-        <label>Аватар (загрузить фото)</label>
-        <input type="file" id="upload-avatar" accept="image/*">
-      </div>
-
-      <div class="input-group">
-        <label>Баннер профиля (Фото или Видео без звука)</label>
-        <input type="file" id="upload-banner" accept="image/*,video/*">
+        <div class="two-cols">
+            <div class="input-group">
+              <label>Аватар</label>
+              <label class="file-load-area">
+                <i class="fas fa-image"></i>
+                <span>Загрузить фото</span>
+                <input type="file" id="upload-avatar" accept="image/*">
+              </label>
+            </div>
+    
+            <div class="input-group">
+              <label>Баннер профиля</label>
+              <label class="file-load-area">
+                <i class="fas fa-film"></i>
+                <span>Фото или Видео</span>
+                <input type="file" id="upload-banner" accept="image/*,video/*">
+              </label>
+            </div>
+        </div>
       </div>
 
       <div class="modal-actions">
         <button id="close-profile" class="btn-secondary">Отмена</button>
-        <button id="save-profile" class="btn-primary">Сохранить всё</button>
+        <button id="save-profile" class="btn-primary">Сохранить изменения</button>
       </div>
     </div>
   </div>
 
   <div id="upload-modal" class="modal-overlay">
     <div class="modal-card">
-      <h3>Настройка загрузки</h3>
+      <div class="modal-header">
+        <h3><i class="fas fa-cloud-upload-alt"></i> Добавить музыку</h3>
+      </div>
+      
       <div class="input-group">
         <label>Название трека</label>
-        <input type="text" id="custom-title">
+        <input type="text" id="custom-title" placeholder="Например: Blinding Lights">
       </div>
       <div class="input-group">
         <label>Исполнитель</label>
-        <input type="text" id="custom-artist">
+        <input type="text" id="custom-artist" placeholder="The Weeknd">
       </div>
       <div class="input-group">
         <label>URL музыки (MP3 ссылка)</label>
-        <input type="text" id="custom-url" placeholder="Вставь ссылку на MP3 (Discord, Dropbox и т.д.)">
+        <input type="text" id="custom-url" placeholder="Вставь прямую ссылку (Dropbox, Discord)">
       </div>
       <div class="input-group">
         <label>URL обложки (Картинка)</label>
-        <input type="text" id="custom-cover-link" placeholder="https://ссылка-на-картинку.jpg">
+        <input type="text" id="custom-cover-link" placeholder="https://image.com/cover.jpg">
       </div>
+      
       <div class="modal-actions">
         <button id="cancel-upload" class="btn-secondary">Отмена</button>
         <button id="confirm-upload" class="btn-primary">Опубликовать</button>
