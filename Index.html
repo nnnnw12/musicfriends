@@ -1,0 +1,139 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="logo">
+      <i class="fab fa-spotify"></i>
+      <h2>MusicFriends</h2>
+    </div>
+
+    <div class="user-profile-widget" id="open-profile-btn">
+      <div class="user-avatar" id="current-user-avatar"></div>
+      <div class="user-info">
+        <span id="current-user-name">Загрузка...</span>
+        <small>Настроить стиль</small>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-item active"><i class="fas fa-home"></i> Главная</div>
+      <div class="nav-item"><i class="fas fa-compact-disc"></i> Общая библиотека</div>
+      
+      <label class="upload-btn">
+        <i class="fas fa-plus"></i>
+        <span>Загрузить MP3</span>
+        <input type="file" id="file-input" accept=".mp3" style="display:none">
+      </label>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <header>
+      <h1>Общая библиотека</h1>
+      <div class="friends-status">
+        <div class="avatars" id="friend-avatars"></div>
+        <span id="online-counter">Загрузка...</span>
+      </div>
+    </header>
+
+    <div class="song-grid" id="song-grid"></div>
+  </main>
+
+  <div id="profile-edit-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 500px;">
+      <h3>Настройки профиля и Темы</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="input-group">
+          <label>Ваше имя</label>
+          <input type="text" id="edit-name">
+        </div>
+        <div class="input-group">
+          <label>Тема сайта</label>
+          <select id="edit-theme" style="background: #3e3e3e; color: white; border: none; padding: 10px; border-radius: 8px;">
+            <option value="default">Spotify Green</option>
+            <option value="plasma">Cyber Pink</option>
+            <option value="ocean">Deep Ocean</option>
+            <option value="gold">Luxury Gold</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Цвет акцента (если нет темы)</label>
+        <input type="color" id="edit-color" style="height: 40px; width: 100%; border: none; padding: 5px; background: #3e3e3e;">
+      </div>
+
+      <div class="input-group">
+        <label>Аватар (загрузить фото)</label>
+        <input type="file" id="upload-avatar" accept="image/*">
+      </div>
+
+      <div class="input-group">
+        <label>Баннер профиля (фон контента)</label>
+        <input type="file" id="upload-banner" accept="image/*">
+      </div>
+
+      <div class="modal-actions">
+        <button id="close-profile" class="btn-secondary">Отмена</button>
+        <button id="save-profile" class="btn-primary">Сохранить всё</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="upload-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>Настройка загрузки</h3>
+      <div class="input-group">
+        <label>Название трека</label>
+        <input type="text" id="custom-title">
+      </div>
+      <div class="input-group">
+        <label>Исполнитель</label>
+        <input type="text" id="custom-artist">
+      </div>
+      <div class="input-group">
+        <label>URL обложки</label>
+        <input type="text" id="custom-cover" placeholder="https://...">
+      </div>
+      <div class="modal-actions">
+        <button id="cancel-upload" class="btn-secondary">Отмена</button>
+        <button id="confirm-upload" class="btn-primary">Опубликовать</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="player">
+    <div class="now-playing">
+      <div class="mini-cover" id="current-cover"><i class="fas fa-music"></i></div>
+      <div class="track-info">
+        <div class="track-name" id="display-name">Выберите трек</div>
+        <div class="track-artist" id="display-artist">Загрузите MP3</div>
+      </div>
+    </div>
+    
+    <div class="player-center">
+      <div class="controls">
+        <button id="shuffle-btn"><i class="fas fa-random"></i></button>
+        <button id="prev-btn"><i class="fas fa-step-backward"></i></button>
+        <button class="main-play" id="play-pause"><i class="fas fa-play"></i></button>
+        <button id="next-btn"><i class="fas fa-step-forward"></i></button>
+        <button id="repeat-btn"><i class="fas fa-redo"></i></button>
+      </div>
+      <div class="progress-wrapper">
+        <span class="time" id="current-time">0:00</span>
+        <div class="progress-container" id="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <span class="time" id="total-duration">0:00</span>
+      </div>
+    </div>
+
+    <div class="volume-control">
+      <i class="fas fa-volume-up"></i>
+      <div class="volume-bar-bg" id="volume-bg">
+        <div class="volume-bar-fill" id="volume-fill" style="width: 80%;"></div>
+      </div>
+    </div>
+  </footer>
+</div>
