@@ -666,100 +666,146 @@ header h1 {
 .btn-secondary:hover {
   color: white;
 }
-/* --- АДАПТИВ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
-
+/* --- УЛУЧШЕННЫЙ АДАПТИВ (ТОЛЬКО ДЛЯ МОБИЛЬНЫХ) --- */
 @media (max-width: 768px) {
-    /* Прячем боковую панель и делаем её верхней или скрытой */
+    /* Перестраиваем главный контейнер */
     .app-container {
-        grid-template-columns: 1fr; /* Убираем колонку сайдбара */
-        height: 100vh;
         display: flex;
         flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
     }
 
+    /* Верхняя панель (бывший сайдбар) */
     .sidebar {
         width: 100%;
-        height: auto;
-        padding: 10px;
-        flex-direction: row;
+        height: 60px;
+        min-height: 60px;
+        padding: 0 15px;
+        flex-direction: row !important; /* Принудительно в ряд */
         align-items: center;
         justify-content: space-between;
         border-right: none;
-        border-bottom: 1px solid #282828;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        background: #000;
+        z-index: 100;
     }
 
-    /* Скрываем лишние надписи в меню, оставляем иконки или делаем компактно */
-    .nav-item span, .logo h2, .user-info small {
-        display: none; 
-    }
-
+    /* Логотип делаем компактным */
     .logo {
-        margin-bottom: 0;
+        margin: 0 !important;
     }
+    .logo i { font-size: 20px; }
+    .logo h2 { display: none; } /* Скрываем текст "MusicFriends" */
 
-    .user-profile-widget {
+    /* Навигация в одну линию */
+    .nav-menu {
+        display: flex;
+        flex-direction: row !important;
+        gap: 15px;
         margin: 0;
+    }
+    .nav-item {
         padding: 5px;
+        margin: 0;
+    }
+    .nav-item span { display: none; } /* Оставляем только иконки */
+    .nav-item i { font-size: 20px; margin: 0; }
+
+    /* Профиль в углу */
+    .user-profile-widget {
+        margin: 0 !important;
+        padding: 0;
+        border: none;
+        background: none;
+    }
+    .user-info { display: none; } /* Скрываем имя и статус */
+    #current-user-avatar {
+        width: 35px;
+        height: 35px;
     }
 
-    /* Сетка песен: 2 колонки на телефонах вместо 4-5 */
-    .song-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
-        padding: 10px;
-    }
-
+    /* Контентная область */
     .content {
         padding: 10px;
-        padding-bottom: 120px; /* Чтобы плеер не перекрывал контент */
+        padding-bottom: 150px; /* Большой отступ под плеер */
+        overflow-y: auto;
     }
 
-    /* Плеер: перестраиваем элементы в столбик или компактно */
+    /* Сетка песен: строго 2 колонки, карточки чуть меньше */
+    .song-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    .song-card {
+        padding: 8px;
+        background: #181818;
+    }
+    .song-card .info .title { font-size: 13px; }
+    .song-card .info .artist { font-size: 11px; }
+
+    /* ПЛЕЕР: Самое важное изменение */
     .player {
-        flex-direction: column;
-        height: auto;
-        padding: 10px;
-        gap: 10px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100px; /* Увеличили высоту для удобства */
+        background: #121212;
+        border-top: 1px solid #282828;
+        display: grid;
+        grid-template-areas: 
+            "info controls"
+            "progress progress";
+        grid-template-columns: 1fr auto;
+        padding: 10px 15px;
+        gap: 5px;
     }
 
     .now-playing {
-        width: 100%;
-        justify-content: flex-start;
+        grid-area: info;
+        width: auto;
     }
+    .now-playing .cover {
+        width: 45px;
+        height: 45px;
+    }
+    .track-info .display-name { font-size: 14px; max-width: 120px; }
 
     .player-center {
+        grid-area: controls;
+        width: auto;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+    
+    .controls {
+        gap: 15px;
+        margin: 0;
+    }
+    .controls button { font-size: 18px; }
+    #play-pause { font-size: 24px; } /* Кнопка паузы побольше */
+
+    #progress-container {
+        grid-area: progress;
         width: 100%;
+        margin: 5px 0;
     }
 
     .volume-control {
-        display: none; /* На мобилках громкость обычно кнопками телефона */
+        display: none; /* Громкость кнопками телефона */
     }
 
-    .controls {
-        gap: 15px;
-    }
-
-    /* Модальные окна делаем на весь экран */
+    /* Модалки на весь экран */
     .modal-card {
-        width: 95%;
-        margin: 10px;
-        padding: 15px;
-    }
-
-    /* Кнопки загрузки делаем удобными для пальца */
-    .upload-btn {
-        padding: 12px;
-        font-size: 14px;
+        width: 92% !important;
+        padding: 20px;
     }
 }
 
-/* Для совсем маленьких экранов (iPhone SE и т.д.) */
-@media (max-width: 480px) {
+/* Для супер-маленьких экранов */
+@media (max-width: 400px) {
     .song-grid {
-        grid-template-columns: 1fr !important; /* В одну колонку */
-    }
-    
-    .track-name {
-        font-size: 14px;
+        grid-template-columns: 1fr !important;
     }
 }
