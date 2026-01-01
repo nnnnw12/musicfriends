@@ -176,35 +176,37 @@ document.getElementById('close-profile').onclick = () => UI.profileModal.style.d
 UI.fileInput.addEventListener('change', (e) => {
     pendingFile = e.target.files[0];
     if (pendingFile) {
-        if(pendingFile.type.indexOf('audio') === -1) {
-            showToast("Это не аудио файл!", "error");
-            return;
-        }
         UI.uploadModal.style.display = 'flex';
         document.getElementById('custom-title').value = pendingFile.name.replace('.mp3', '');
         document.getElementById('custom-artist').value = userProfile.name;
     }
 });
 
+// ИЗМЕНЕННАЯ ФУНКЦИЯ ДЛЯ ДИСКОРД-ССЫЛОК
 document.getElementById('confirm-upload').onclick = async () => {
-    if (!pendingFile) return;
     const btn = document.getElementById('confirm-upload');
+    const discordUrl = document.getElementById('custom-cover').value; // Берем ссылку из поля "URL обложки"
+
+    if (!discordUrl || !discordUrl.startsWith('http')) {
+        showToast("Вставь ссылку на MP3 в поле 'URL обложки'!", "error");
+        return;
+    }
+
     btn.innerText = "Загрузка...";
     try {
-        const base64Audio = await fileToBase64(pendingFile);
         const newSong = {
             id: Date.now(),
             title: document.getElementById('custom-title').value || "Без названия",
             artist: document.getElementById('custom-artist').value || "Неизвестен",
-            cover: document.getElementById('custom-cover').value || "https://via.placeholder.com/300/1db954/ffffff?text=Music",
-            url: base64Audio
+            cover: "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
+            url: discordUrl // Прямая ссылка на файл вместо Base64
         };
         songs.push(newSong);
         saveLibrary();
         renderLibrary();
         UI.uploadModal.style.display = 'none';
         UI.fileInput.value = '';
-        showToast("Трек успешно добавлен!");
+        showToast("Трек успешно добавлен по ссылке!");
     } catch (e) {
         showToast("Ошибка сохранения", "error");
     } finally {
@@ -257,7 +259,7 @@ function playSong(index) {
     audio.play().then(() => { 
         isPlaying = true; 
         updatePlayerUI(songs[index]); 
-    }).catch(() => showToast("Ошибка воспроизведения", "error"));
+    }).catch(() => showToast("Ошибка воспроизведения ссылки", "error"));
 }
 
 function togglePlay() {
