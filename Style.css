@@ -666,3 +666,100 @@ header h1 {
 .btn-secondary:hover {
   color: white;
 }
+/* --- АДАПТИВ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
+
+@media (max-width: 768px) {
+    /* Прячем боковую панель и делаем её верхней или скрытой */
+    .app-container {
+        grid-template-columns: 1fr; /* Убираем колонку сайдбара */
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border-right: none;
+        border-bottom: 1px solid #282828;
+    }
+
+    /* Скрываем лишние надписи в меню, оставляем иконки или делаем компактно */
+    .nav-item span, .logo h2, .user-info small {
+        display: none; 
+    }
+
+    .logo {
+        margin-bottom: 0;
+    }
+
+    .user-profile-widget {
+        margin: 0;
+        padding: 5px;
+    }
+
+    /* Сетка песен: 2 колонки на телефонах вместо 4-5 */
+    .song-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .content {
+        padding: 10px;
+        padding-bottom: 120px; /* Чтобы плеер не перекрывал контент */
+    }
+
+    /* Плеер: перестраиваем элементы в столбик или компактно */
+    .player {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .now-playing {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .player-center {
+        width: 100%;
+    }
+
+    .volume-control {
+        display: none; /* На мобилках громкость обычно кнопками телефона */
+    }
+
+    .controls {
+        gap: 15px;
+    }
+
+    /* Модальные окна делаем на весь экран */
+    .modal-card {
+        width: 95%;
+        margin: 10px;
+        padding: 15px;
+    }
+
+    /* Кнопки загрузки делаем удобными для пальца */
+    .upload-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* Для совсем маленьких экранов (iPhone SE и т.д.) */
+@media (max-width: 480px) {
+    .song-grid {
+        grid-template-columns: 1fr !important; /* В одну колонку */
+    }
+    
+    .track-name {
+        font-size: 14px;
+    }
+}
