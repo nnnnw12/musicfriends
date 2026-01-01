@@ -4,7 +4,7 @@
 
 // --- 0. ПОДКЛЮЧЕНИЕ FIREBASE ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, onDisconnect, push, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC0U0fdnj4V1UJXiz_TVOhxmPlUk67r-xI",
@@ -18,16 +18,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const globalSongsRef = ref(db, 'shared_songs'); // Ссылка на общую базу песен
 
 // --- 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И НАСТРОЙКИ ---
 
 const STORAGE_KEYS = {
-    LIBRARY: 'mf_library_v4',
     PROFILE: 'mf_profile_v4',
     SETTINGS: 'mf_settings_v4'
 };
 
-let songs = JSON.parse(localStorage.getItem(STORAGE_KEYS.LIBRARY)) || [];
+let songs = []; 
+let songKeys = []; // Ключи из Firebase для удаления
 let userProfile = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILE)) || {
     name: "Твой Ник",
     color: "#1db954",
@@ -40,16 +41,6 @@ let settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {
     isShuffle: false,
     isRepeat: false
 };
-
-// Функция сохранения библиотеки (исправлена)
-function saveLibrary() {
-    try {
-        localStorage.setItem(STORAGE_KEYS.LIBRARY, JSON.stringify(songs));
-    } catch (e) {
-        showToast("Ошибка: память браузера переполнена", "error");
-    }
-}
-window.saveLibrary = saveLibrary;
 
 let currentSongIndex = -1;
 let isPlaying = false;
@@ -82,13 +73,23 @@ const UI = {
 
 window.addEventListener('DOMContentLoaded', () => {
     applyProfileStyles();
-    renderLibrary();
     initPlayerControls();
     initRealtimeFriends();
 
+    // СИНХРОНИЗАЦИЯ БИБЛИОТЕКИ С ОБЛАКОМ
+    onValue(globalSongsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            songKeys = Object.keys(data);
+            songs = Object.values(data);
+        } else {
+            songKeys = [];
+            songs = [];
+        }
+        renderLibrary();
+    });
+
     if(UI.volumeFill) UI.volumeFill.style.width = (settings.volume * 100) + '%';
-    
-    // Подсветка кнопок повтора/шаффла при загрузке
     if(UI.repeatBtn) UI.repeatBtn.style.color = settings.isRepeat ? 'var(--accent)' : 'var(--text-dim)';
     if(UI.shuffleBtn) UI.shuffleBtn.style.color = settings.isShuffle ? 'var(--accent)' : 'var(--text-dim)';
     
@@ -182,33 +183,37 @@ UI.fileInput.addEventListener('change', (e) => {
     }
 });
 
-// ИЗМЕНЕННАЯ ФУНКЦИЯ ДЛЯ ДИСКОРД-ССЫЛОК
+// ИЗМЕНЕННАЯ ФУНКЦИЯ: ТЕПЕРЬ СОХРАНЯЕТ В FIREBASE
 document.getElementById('confirm-upload').onclick = async () => {
     const btn = document.getElementById('confirm-upload');
-    const discordUrl = document.getElementById('custom-cover').value; // Берем ссылку из поля "URL обложки"
-
+    const discordUrl = document.getElementById('custom-cover').value; 
+    
     if (!discordUrl || !discordUrl.startsWith('http')) {
-        showToast("Вставь ссылку на MP3 в поле 'URL обложки'!", "error");
+        showToast("Вставь ссылку на музыку в поле 'URL обложки'!", "error");
         return;
     }
 
-    btn.innerText = "Загрузка...";
+    // Спрашиваем ссылку на обложку
+    const realCover = prompt("Вставь ссылку на КАРТИНКУ (обложку) для этой песни:", "https://via.placeholder.com/300/1db954/ffffff?text=Music");
+
+    btn.innerText = "Публикация...";
     try {
         const newSong = {
-            id: Date.now(),
             title: document.getElementById('custom-title').value || "Без названия",
             artist: document.getElementById('custom-artist').value || "Неизвестен",
-            cover: "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
-            url: discordUrl // Прямая ссылка на файл вместо Base64
+            cover: realCover || "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
+            url: discordUrl
         };
-        songs.push(newSong);
-        saveLibrary();
-        renderLibrary();
+
+        // Пушим в Firebase
+        const newSongRef = push(globalSongsRef);
+        await set(newSongRef, newSong);
+
         UI.uploadModal.style.display = 'none';
         UI.fileInput.value = '';
-        showToast("Трек успешно добавлен по ссылке!");
+        showToast("Песня добавлена для всех!");
     } catch (e) {
-        showToast("Ошибка сохранения", "error");
+        showToast("Ошибка сети", "error");
     } finally {
         btn.innerText = "Опубликовать";
     }
@@ -216,20 +221,17 @@ document.getElementById('confirm-upload').onclick = async () => {
 
 document.getElementById('cancel-upload').onclick = () => UI.uploadModal.style.display = 'none';
 
-function deleteSong(index, event) {
+// УДАЛЕНИЕ ИЗ FIREBASE
+async function deleteSong(index, event) {
     event.stopPropagation();
-    if(confirm("Удалить этот трек?")) {
-        songs.splice(index, 1);
-        saveLibrary();
-        renderLibrary();
-        if (index === currentSongIndex) {
-            audio.pause();
-            isPlaying = false;
-            updatePlayBtn();
-        } else if (index < currentSongIndex) {
-            currentSongIndex--;
+    if(confirm("Удалить этот трек у ВСЕХ пользователей?")) {
+        const keyToDelete = songKeys[index];
+        try {
+            await remove(ref(db, `shared_songs/${keyToDelete}`));
+            showToast("Трек удален из облака");
+        } catch (e) {
+            showToast("Ошибка удаления", "error");
         }
-        showToast("Трек удален");
     }
 }
 
@@ -270,7 +272,6 @@ function togglePlay() {
     renderLibrary();
 }
 
-// Экспорт функций в глобальное окно (обязательно для модулей)
 window.playSong = playSong;
 window.togglePlay = togglePlay;
 window.deleteSong = deleteSong;
@@ -326,7 +327,6 @@ function initPlayerControls() {
     });
 }
 
-// Логика окончания трека (исправлен ПОВТОР)
 audio.onended = () => {
     if (settings.isRepeat) {
         audio.currentTime = 0;
