@@ -1,0 +1,668 @@
+/* =========================================
+   1. ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ТЕМЫ
+   ========================================= */
+:root {
+  /* Основные цвета (Оригинал) */
+  --bg-dark: #000000;
+  --sidebar-bg: #000000;
+  --card-bg: #181818;
+  --card-hover: #282828;
+  --text-main: #ffffff;
+  --text-dim: #b3b3b3;
+  
+  /* Акцентный цвет (по умолчанию Spotify Green) */
+  --accent: #1db954;
+  
+  /* Размеры интерфейса */
+  --sidebar-width: 240px;
+  --player-height: 90px;
+}
+
+/* Настройки ТЕМ (Меняют только акцент) */
+[data-theme="plasma"] { --accent: #ff0077; }
+[data-theme="ocean"] { --accent: #0077ff; }
+[data-theme="gold"] { --accent: #ffcc00; }
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Чтобы не было двойных скроллов */
+}
+
+/* =========================================
+   2. ОСНОВНАЯ СЕТКА (LAYOUT)
+   ========================================= */
+.app-container {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr; /* Сайдбар фикс, контент резина */
+  grid-template-rows: 1fr var(--player-height);    /* Контент, снизу плеер */
+  height: 100vh;
+  width: 100vw;
+}
+
+/* =========================================
+   3. БОКОВАЯ ПАНЕЛЬ (SIDEBAR)
+   ========================================= */
+.sidebar {
+  background: var(--sidebar-bg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--text-main);
+}
+
+.logo i {
+  font-size: 2.5rem; /* Большая иконка как в оригинале */
+}
+
+.logo h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+/* Виджет профиля в сайдбаре */
+.user-profile-widget {
+  background: #121212; /* Чуть светлее фона */
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+
+.user-profile-widget:hover {
+  background: #282828;
+  border-color: #444;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  border: 2px solid #000;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-info span {
+  font-weight: bold;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-info small {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+/* Навигация */
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 15px;
+  color: var(--text-dim);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.3s;
+}
+
+.nav-item:hover {
+  color: var(--text-main);
+}
+
+.nav-item.active {
+  color: var(--text-main);
+  background-color: #282828;
+}
+
+.nav-item i {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+/* Кнопка загрузки */
+.upload-btn {
+  margin-top: 20px;
+  background: white;
+  color: black;
+  padding: 12px;
+  border-radius: 30px; /* Более круглая */
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.upload-btn:hover {
+  transform: scale(1.05);
+  background: var(--accent); /* Становится цветной при наведении */
+}
+
+/* =========================================
+   4. ОСНОВНОЙ КОНТЕНТ (CONTENT)
+   ========================================= */
+.content {
+  /* Градиентный фон по умолчанию, который меняется JS-ом */
+  background: linear-gradient(to bottom, #222222, var(--bg-dark));
+  padding: 30px;
+  overflow-y: auto;
+  position: relative;
+  
+  /* Свойства для Баннера */
+  background-size: 100% 350px, cover; /* Баннер сверху, дальше цвет */
+  background-repeat: no-repeat;
+  transition: background 0.5s ease;
+}
+
+/* Кастомный скроллбар */
+.content::-webkit-scrollbar {
+  width: 10px;
+}
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.content::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+.content::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+/* Шапка контента */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2; /* Чтобы быть над фоном */
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+/* Статус друзей */
+.friends-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  padding: 8px 20px;
+  border-radius: 30px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.avatars {
+  display: flex;
+  padding-left: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #121212;
+  margin-left: -12px;
+  position: relative;
+  transition: transform 0.2s;
+  cursor: help;
+}
+
+.avatar:hover {
+  transform: scale(1.2) translateY(-5px);
+  z-index: 10;
+}
+
+/* Зеленая точка онлайна */
+.avatar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #1db954;
+  border-radius: 50%;
+  border: 2px solid #121212;
+}
+
+/* =========================================
+   5. СЕТКА ПЕСЕН (SONG GRID)
+   ========================================= */
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.song-card {
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  isolation: isolate; /* Для позиционирования кнопки удаления */
+}
+
+.song-card:hover {
+  background: var(--card-hover);
+  transform: translateY(-6px);
+}
+
+/* Кнопка удаления (крестик) */
+.delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  color: #ff4757;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: none; /* Скрыта по умолчанию */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: 0.2s;
+}
+
+.delete-btn:hover {
+  background: #ff4757;
+  color: white;
+  transform: scale(1.1);
+}
+
+.song-card:hover .delete-btn {
+  display: flex; /* Показываем при наведении на карточку */
+}
+
+/* Обложка */
+.cover {
+  width: 100%;
+  aspect-ratio: 1; /* Квадрат */
+  background: #333;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Кнопка Play на карточке */
+.play-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 48px;
+  height: 48px;
+  background: var(--accent); /* Зеленый (или цвет темы) */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-size: 1.2rem;
+  
+  opacity: 0;
+  transform: translateY(10px);
+  transition: 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.song-card:hover .play-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.play-btn:hover {
+  transform: scale(1.1) !important;
+  background: white;
+}
+
+/* Инфо о треке */
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.info .title {
+  font-weight: 700;
+  color: white;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info .artist {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Подсветка играющего трека */
+.song-card.playing-card .title {
+  color: var(--accent);
+}
+
+/* =========================================
+   6. НИЖНИЙ ПЛЕЕР (PLAYER BAR)
+   ========================================= */
+.player {
+  grid-column: 1 / -1;
+  background: #181818;
+  border-top: 1px solid #282828;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+}
+
+/* Левая часть: Текущий трек */
+.now-playing {
+  width: 30%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.mini-cover {
+  width: 56px;
+  height: 56px;
+  background: #282828;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.mini-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.track-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.track-name {
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.track-artist {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+/* Центр: Кнопки и Прогресс */
+.player-center {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.controls button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.controls button:hover {
+  color: white;
+}
+
+/* Главная кнопка Play внизу */
+.main-play {
+  width: 35px;
+  height: 35px;
+  background: white !important;
+  color: black !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.main-play:hover {
+  transform: scale(1.1);
+}
+
+/* Полоса прогресса */
+.progress-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.progress-container {
+  flex: 1;
+  height: 4px;
+  background: #535353;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: white;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.progress-container:hover .progress-bar {
+  background: var(--accent); /* Зеленый при наведении */
+}
+
+/* Правая часть: Громкость */
+.volume-control {
+  width: 30%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-dim);
+}
+
+.volume-bar-bg {
+  width: 100px;
+  height: 4px;
+  background: #535353;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.volume-bar-fill {
+  width: 70%;
+  height: 100%;
+  background: var(--text-dim);
+  border-radius: 2px;
+}
+
+.volume-bar-bg:hover .volume-bar-fill {
+  background: var(--accent);
+}
+
+/* =========================================
+   7. МОДАЛЬНЫЕ ОКНА (POPUPS)
+   ========================================= */
+.modal-overlay {
+  display: none; /* Скрыто по умолчанию */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85); /* Затемнение фона */
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  background: #282828;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-card h3 {
+  margin: 0;
+  color: white;
+  text-align: center;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+}
+
+.input-group input, .input-group select {
+  background: #3e3e3e;
+  border: 1px solid transparent;
+  padding: 12px;
+  border-radius: 5px;
+  color: white;
+  font-family: inherit;
+}
+
+.input-group input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: black;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  background: #fff;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-dim);
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  color: white;
+}
