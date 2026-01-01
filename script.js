@@ -92,7 +92,7 @@ window.addEventListener('DOMContentLoaded', () => {
         renderLibrary();
     });
 
-    // Слушатель для авто-названия: когда вставляешь ссылку, имя трека пишется само
+    // Слушатель для авто-названия
     const customUrlInput = document.getElementById('custom-url');
     if (customUrlInput) {
         customUrlInput.addEventListener('input', (e) => {
@@ -193,7 +193,6 @@ document.getElementById('close-profile').onclick = () => UI.profileModal.style.d
 
 // --- 4. ЛОГИКА БИБЛИОТЕКИ ---
 
-// Кнопка открытия через ссылку (ИСПРАВЛЕНО: Клик теперь работает)
 const addByLinkBtn = document.getElementById('add-by-link-btn');
 if (addByLinkBtn) {
     addByLinkBtn.onclick = () => {
@@ -204,7 +203,6 @@ if (addByLinkBtn) {
         document.getElementById('custom-cover-link').value = "";
     };
 } else {
-    // Если по ID не нашли, ищем по иконке/тексту (на всякий случай)
     document.querySelectorAll('.upload-btn').forEach(btn => {
         if (btn.innerText.includes("ссылке")) {
             btn.onclick = () => {
