@@ -1,5 +1,6 @@
 /**
  * MusicFriends Engine Ultimate + AUTO-NAME & NO-CLONE SYSTEM
+ * UPDATED: DROPBOX AUTO-FIX & MOBILE OPTIMIZATION
  */
 
 // --- 0. ПОДКЛЮЧЕНИЕ FIREBASE ---
@@ -50,6 +51,8 @@ let currentSongIndex = -1;
 let isPlaying = false;
 let pendingFile = null;
 const audio = new Audio();
+// Важно для мобильных: разрешаем предзагрузку
+audio.preload = "auto";
 audio.volume = settings.volume;
 
 const UI = {
@@ -92,7 +95,6 @@ window.addEventListener('DOMContentLoaded', () => {
         renderLibrary();
     });
 
-    // Слушатель для авто-названия
     const customUrlInput = document.getElementById('custom-url');
     if (customUrlInput) {
         customUrlInput.addEventListener('input', (e) => {
@@ -191,7 +193,7 @@ document.getElementById('save-profile').onclick = async () => {
 
 document.getElementById('close-profile').onclick = () => UI.profileModal.style.display = 'none';
 
-// --- 4. ЛОГИКА БИБЛИОТЕКИ ---
+// --- 4. ЛОГИКА БИБЛИОТЕКИ (С ФИКСОМ ССЫЛОК) ---
 
 const addByLinkBtn = document.getElementById('add-by-link-btn');
 if (addByLinkBtn) {
@@ -227,8 +229,13 @@ UI.fileInput.addEventListener('change', (e) => {
 
 document.getElementById('confirm-upload').onclick = async () => {
     const btn = document.getElementById('confirm-upload');
-    const songUrl = document.getElementById('custom-url').value; 
+    let songUrl = document.getElementById('custom-url').value; 
     const coverUrl = document.getElementById('custom-cover-link').value;
+    
+    // --- АВТО-ФИКС DROPBOX ДЛЯ МОБИЛЬНЫХ И ПК ---
+    if (songUrl.includes("dropbox.com")) {
+        songUrl = songUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("dl=0", "raw=1");
+    }
     
     if (!songUrl || !songUrl.startsWith('http')) {
         showToast("Вставь ссылку на музыку!", "error");
@@ -297,10 +304,14 @@ function playSong(index) {
     if (currentSongIndex === index) { togglePlay(); return; }
     currentSongIndex = index;
     audio.src = songs[index].url;
+    audio.load(); // Важно для смены трека на мобильных
     audio.play().then(() => { 
         isPlaying = true; 
         updatePlayerUI(songs[index]); 
-    }).catch(() => showToast("Ошибка воспроизведения ссылки", "error"));
+    }).catch((err) => {
+        console.error(err);
+        showToast("Ошибка ссылки (Dropbox/Discord)", "error");
+    });
 }
 
 function togglePlay() {
@@ -373,15 +384,7 @@ audio.onended = () => {
         audio.currentTime = 0;
         audio.play();
     } else {
-        if (settings.isShuffle) {
-            playSong(Math.floor(Math.random() * songs.length));
-        } else if (currentSongIndex < songs.length - 1) {
-            playSong(currentSongIndex + 1);
-        } else {
-            isPlaying = false;
-            updatePlayBtn();
-            renderLibrary();
-        }
+        UI.nextBtn.click();
     }
 };
 
@@ -397,7 +400,7 @@ UI.progressContainer.onclick = (e) => {
     audio.currentTime = (e.offsetX / UI.progressContainer.clientWidth) * audio.duration;
 };
 
-// --- 6. FIREBASE ONLINE (БЕЗ КЛОНОВ) ---
+// --- 6. FIREBASE ONLINE ---
 
 let myPresenceRef = null;
 
