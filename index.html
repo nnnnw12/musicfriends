@@ -32,9 +32,14 @@
       
       <label class="upload-btn">
         <i class="fas fa-plus"></i>
-        <span>Загрузить MP3</span>
+        <span>Выбрать MP3 файл</span>
         <input type="file" id="file-input" accept=".mp3" style="display:none">
       </label>
+
+      <div class="upload-btn" id="add-by-link-btn" style="margin-top: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px;">
+        <i class="fas fa-link"></i>
+        <span>Добавить по ссылке</span>
+      </div>
     </nav>
   </aside>
 
@@ -104,12 +109,12 @@
         <input type="text" id="custom-artist">
       </div>
       <div class="input-group">
-        <label>URL музыки (MP3)</label>
-        <input type="text" id="custom-url" placeholder="https://cdn.discordapp...mp3">
+        <label>URL музыки (MP3 ссылка)</label>
+        <input type="text" id="custom-url" placeholder="Вставь ссылку на MP3 (Discord, Dropbox и т.д.)">
       </div>
       <div class="input-group">
         <label>URL обложки (Картинка)</label>
-        <input type="text" id="custom-cover-link" placeholder="https://...">
+        <input type="text" id="custom-cover-link" placeholder="https://ссылка-на-картинку.jpg">
       </div>
       <div class="modal-actions">
         <button id="cancel-upload" class="btn-secondary">Отмена</button>
