@@ -183,32 +183,34 @@ UI.fileInput.addEventListener('change', (e) => {
     }
 });
 
-// ИЗМЕНЕННАЯ ФУНКЦИЯ: ТЕПЕРЬ СОХРАНЯЕТ В FIREBASE
+// СОХРАНЕНИЕ В FIREBASE С НОВЫМИ ПОЛЯМИ
 document.getElementById('confirm-upload').onclick = async () => {
     const btn = document.getElementById('confirm-upload');
-    const discordUrl = document.getElementById('custom-cover').value; 
     
-    if (!discordUrl || !discordUrl.startsWith('http')) {
-        showToast("Вставь ссылку на музыку в поле 'URL обложки'!", "error");
+    // Получаем данные из двух полей в модальном окне
+    const songUrl = document.getElementById('custom-url').value; 
+    const coverUrl = document.getElementById('custom-cover-link').value;
+    
+    if (!songUrl || !songUrl.startsWith('http')) {
+        showToast("Вставь ссылку на музыку!", "error");
         return;
     }
-
-    // Спрашиваем ссылку на обложку
-    const realCover = prompt("Вставь ссылку на КАРТИНКУ (обложку) для этой песни:", "https://via.placeholder.com/300/1db954/ffffff?text=Music");
 
     btn.innerText = "Публикация...";
     try {
         const newSong = {
             title: document.getElementById('custom-title').value || "Без названия",
             artist: document.getElementById('custom-artist').value || "Неизвестен",
-            cover: realCover || "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
-            url: discordUrl
+            cover: coverUrl || "https://via.placeholder.com/300/1db954/ffffff?text=Music", 
+            url: songUrl
         };
 
-        // Пушим в Firebase
         const newSongRef = push(globalSongsRef);
         await set(newSongRef, newSong);
 
+        // Очистка полей
+        document.getElementById('custom-url').value = '';
+        document.getElementById('custom-cover-link').value = '';
         UI.uploadModal.style.display = 'none';
         UI.fileInput.value = '';
         showToast("Песня добавлена для всех!");
@@ -221,7 +223,6 @@ document.getElementById('confirm-upload').onclick = async () => {
 
 document.getElementById('cancel-upload').onclick = () => UI.uploadModal.style.display = 'none';
 
-// УДАЛЕНИЕ ИЗ FIREBASE
 async function deleteSong(index, event) {
     event.stopPropagation();
     if(confirm("Удалить этот трек у ВСЕХ пользователей?")) {
