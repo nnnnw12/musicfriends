@@ -24,7 +24,8 @@ const globalSongsRef = ref(db, 'shared_songs'); // Ссылка на общую 
 
 const STORAGE_KEYS = {
     PROFILE: 'mf_profile_v4',
-    SETTINGS: 'mf_settings_v4'
+    SETTINGS: 'mf_settings_v4',
+    USER_ID: 'mf_user_uid_v4' // Ключ для уникального ID браузера
 };
 
 let songs = []; 
@@ -41,6 +42,10 @@ let settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {
     isShuffle: false,
     isRepeat: false
 };
+
+// Генерируем или получаем постоянный ID пользователя для этого браузера
+const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'user_' + Math.random().toString(36).substr(2, 9);
+localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
 
 let currentSongIndex = -1;
 let isPlaying = false;
@@ -174,12 +179,25 @@ document.getElementById('close-profile').onclick = () => UI.profileModal.style.d
 
 // --- 4. ЛОГИКА БИБЛИОТЕКИ ---
 
+// Кнопка открытия через ссылку
+const addByLinkBtn = document.getElementById('add-by-link-btn');
+if (addByLinkBtn) {
+    addByLinkBtn.onclick = () => {
+        UI.uploadModal.style.display = 'flex';
+        document.getElementById('custom-title').value = "";
+        document.getElementById('custom-artist').value = userProfile.name;
+        document.getElementById('custom-url').value = "";
+        document.getElementById('custom-cover-link').value = "";
+    };
+}
+
 UI.fileInput.addEventListener('change', (e) => {
     pendingFile = e.target.files[0];
     if (pendingFile) {
         UI.uploadModal.style.display = 'flex';
         document.getElementById('custom-title').value = pendingFile.name.replace('.mp3', '');
         document.getElementById('custom-artist').value = userProfile.name;
+        showToast("Файл выбран. Вставь прямую ссылку на него.");
     }
 });
 
@@ -292,10 +310,12 @@ function updatePlayBtn() {
 function initPlayerControls() {
     UI.playPauseBtn.onclick = togglePlay;
     UI.nextBtn.onclick = () => {
+        if (songs.length === 0) return;
         if (settings.isShuffle) playSong(Math.floor(Math.random() * songs.length));
         else playSong((currentSongIndex + 1) % songs.length);
     };
     UI.prevBtn.onclick = () => {
+        if (songs.length === 0) return;
         let prev = currentSongIndex - 1;
         if (prev < 0) prev = songs.length - 1;
         playSong(prev);
@@ -357,17 +377,20 @@ UI.progressContainer.onclick = (e) => {
     audio.currentTime = (e.offsetX / UI.progressContainer.clientWidth) * audio.duration;
 };
 
-// --- 6. FIREBASE ONLINE ---
+// --- 6. FIREBASE ONLINE (ИСПРАВЛЕНО: БОЛЬШЕ НЕТ КЛОНОВ) ---
 
 let myPresenceRef = null;
 
 function initRealtimeFriends() {
-    const onlineRef = ref(db, 'online');
-    myPresenceRef = push(onlineRef);
+    // Используем userId вместо push(), чтобы запись обновлялась, а не множилась
+    myPresenceRef = ref(db, `online/${userId}`);
 
     updateOnlineStatus();
+    
+    // При отключении удаляем именно нашу запись по ID
     onDisconnect(myPresenceRef).remove();
 
+    const onlineRef = ref(db, 'online');
     onValue(onlineRef, (snapshot) => {
         const users = snapshot.val();
         renderOnlineUsers(users);
