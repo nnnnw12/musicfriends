@@ -1,5 +1,5 @@
 /**
- * MusicFriends Engine Ultimate + REAL-TIME ONLINE SYSTEM
+ * MusicFriends Engine Ultimate + AUTO-NAME & NO-CLONE SYSTEM
  */
 
 // --- 0. ПОДКЛЮЧЕНИЕ FIREBASE ---
@@ -18,18 +18,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const globalSongsRef = ref(db, 'shared_songs'); // Ссылка на общую базу песен
+const globalSongsRef = ref(db, 'shared_songs'); 
 
 // --- 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И НАСТРОЙКИ ---
 
 const STORAGE_KEYS = {
     PROFILE: 'mf_profile_v4',
     SETTINGS: 'mf_settings_v4',
-    USER_ID: 'mf_user_uid_v4' // Ключ для уникального ID браузера
+    USER_ID: 'mf_user_uid_v4'
 };
 
 let songs = []; 
-let songKeys = []; // Ключи из Firebase для удаления
+let songKeys = []; 
 let userProfile = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILE)) || {
     name: "Твой Ник",
     color: "#1db954",
@@ -43,7 +43,6 @@ let settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {
     isRepeat: false
 };
 
-// Генерируем или получаем постоянный ID пользователя для этого браузера
 const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'user_' + Math.random().toString(36).substr(2, 9);
 localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
 
@@ -81,7 +80,6 @@ window.addEventListener('DOMContentLoaded', () => {
     initPlayerControls();
     initRealtimeFriends();
 
-    // СИНХРОНИЗАЦИЯ БИБЛИОТЕКИ С ОБЛАКОМ
     onValue(globalSongsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -93,6 +91,22 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         renderLibrary();
     });
+
+    // Слушатель для авто-названия: когда вставляешь ссылку, имя трека пишется само
+    const customUrlInput = document.getElementById('custom-url');
+    if (customUrlInput) {
+        customUrlInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            const titleInput = document.getElementById('custom-title');
+            if (val && !titleInput.value) {
+                try {
+                    let filename = val.split('/').pop().split('?')[0];
+                    filename = decodeURIComponent(filename).replace('.mp3', '').replace(/_/g, ' ').replace(/-/g, ' ');
+                    titleInput.value = filename;
+                } catch (err) { console.log("Не удалось вытащить имя"); }
+            }
+        });
+    }
 
     if(UI.volumeFill) UI.volumeFill.style.width = (settings.volume * 100) + '%';
     if(UI.repeatBtn) UI.repeatBtn.style.color = settings.isRepeat ? 'var(--accent)' : 'var(--text-dim)';
@@ -179,7 +193,7 @@ document.getElementById('close-profile').onclick = () => UI.profileModal.style.d
 
 // --- 4. ЛОГИКА БИБЛИОТЕКИ ---
 
-// Кнопка открытия через ссылку
+// Кнопка открытия через ссылку (ИСПРАВЛЕНО: Клик теперь работает)
 const addByLinkBtn = document.getElementById('add-by-link-btn');
 if (addByLinkBtn) {
     addByLinkBtn.onclick = () => {
@@ -189,6 +203,18 @@ if (addByLinkBtn) {
         document.getElementById('custom-url').value = "";
         document.getElementById('custom-cover-link').value = "";
     };
+} else {
+    // Если по ID не нашли, ищем по иконке/тексту (на всякий случай)
+    document.querySelectorAll('.upload-btn').forEach(btn => {
+        if (btn.innerText.includes("ссылке")) {
+            btn.onclick = () => {
+                UI.uploadModal.style.display = 'flex';
+                document.getElementById('custom-title').value = "";
+                document.getElementById('custom-url').value = "";
+                document.getElementById('custom-artist').value = userProfile.name;
+            }
+        }
+    });
 }
 
 UI.fileInput.addEventListener('change', (e) => {
@@ -201,11 +227,8 @@ UI.fileInput.addEventListener('change', (e) => {
     }
 });
 
-// СОХРАНЕНИЕ В FIREBASE С НОВЫМИ ПОЛЯМИ
 document.getElementById('confirm-upload').onclick = async () => {
     const btn = document.getElementById('confirm-upload');
-    
-    // Получаем данные из двух полей в модальном окне
     const songUrl = document.getElementById('custom-url').value; 
     const coverUrl = document.getElementById('custom-cover-link').value;
     
@@ -226,7 +249,6 @@ document.getElementById('confirm-upload').onclick = async () => {
         const newSongRef = push(globalSongsRef);
         await set(newSongRef, newSong);
 
-        // Очистка полей
         document.getElementById('custom-url').value = '';
         document.getElementById('custom-cover-link').value = '';
         UI.uploadModal.style.display = 'none';
@@ -377,17 +399,13 @@ UI.progressContainer.onclick = (e) => {
     audio.currentTime = (e.offsetX / UI.progressContainer.clientWidth) * audio.duration;
 };
 
-// --- 6. FIREBASE ONLINE (ИСПРАВЛЕНО: БОЛЬШЕ НЕТ КЛОНОВ) ---
+// --- 6. FIREBASE ONLINE (БЕЗ КЛОНОВ) ---
 
 let myPresenceRef = null;
 
 function initRealtimeFriends() {
-    // Используем userId вместо push(), чтобы запись обновлялась, а не множилась
     myPresenceRef = ref(db, `online/${userId}`);
-
     updateOnlineStatus();
-    
-    // При отключении удаляем именно нашу запись по ID
     onDisconnect(myPresenceRef).remove();
 
     const onlineRef = ref(db, 'online');
