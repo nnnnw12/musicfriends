@@ -5,19 +5,23 @@
 
 // --- 0. ПОДКЛЮЧЕНИЕ FIREBASE ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
 import { getDatabase, ref, set, onValue, onDisconnect, push, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
+// Конфигурация твоего нового приложения Firebase (streamhub-181ea)
 const firebaseConfig = {
-    apiKey: "AIzaSyC0U0fdnj4V1UJXiz_TVOhxmPlUk67r-xI",
-    authDomain: "musicfriendsbro-893fb.firebaseapp.com",
-    projectId: "musicfriendsbro-893fb",
-    storageBucket: "musicfriendsbro-893fb.firebasestorage.app",
-    messagingSenderId: "702623321390",
-    appId: "1:702623321390:web:493acd08b641ec40d4bebf",
-    measurementId: "G-HZ537XCYGV"
+    apiKey: "AIzaSyDQjV6RqoXtq-Y9wDqmn3SJsdfZgY4H1qg",
+    authDomain: "streamhub-181ea.firebaseapp.com",
+    projectId: "streamhub-181ea",
+    storageBucket: "streamhub-181ea.firebasestorage.app",
+    messagingSenderId: "587553893549",
+    appId: "1:587553893549:web:93747acc1b8a5b4d1d2a24",
+    measurementId: "G-DKWLXFYKYE"
 };
 
+// Инициализация Firebase и подключение базы данных
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const db = getDatabase(app);
 const globalSongsRef = ref(db, 'shared_songs'); 
 
